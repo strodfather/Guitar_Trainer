@@ -1,4 +1,4 @@
-const CACHE='guitar-trainer-v1';
+const CACHE='guitar-trainer-v2';
 
 const PRECACHE=[
     './guitar_trainer.html',
@@ -33,6 +33,7 @@ self.addEventListener('activate',e=>{
 
 self.addEventListener('fetch',e=>{
     if(e.request.method!=='GET') return;
+    if(!e.request.url.startsWith('http')) return;
     const url=new URL(e.request.url);
     const isFont=url.hostname.includes('fonts.googleapis.com')||url.hostname.includes('fonts.gstatic.com');
     if(isFont){
