@@ -143,7 +143,7 @@ function _noteAt(si,fret){
 
 function _dfs(si,frets,covered,state,minF,maxF,sopts,tones,req,results,seen){
     if(results.length>120) return;
-    if(si===6){
+    if(si===sopts.length){
         for(const r of req){if(!covered.has(r)) return;}
         if(_countFingers(frets)>4) return;
         const key=frets.join(',');
