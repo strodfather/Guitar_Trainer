@@ -4,7 +4,7 @@ import{createFretboard,renderNotes}from'./render.js';
 import{startFreeplay,stopFreeplay,isFreeplayActive,isFretboardMode,handleFretboardClick,nextFreeplayQuestion,startChapterQuiz,submitChapterText,nextChapterQuestion,stopChapterQuiz,isChapterQuizActive}from'./quiz.js';
 import{CHAPTERS}from'./course.js';
 import{CHORD_FORMULAS,parseChordName,generateVoicings,getChordDisplayName,getChordNoteNames,setOpenNotes}from'./chords.js';
-import{renderDiagram}from'./chordDiagram.js';
+import{renderDiagram}from'./chorddiagram.js';
 
 function populateKeys(){
     const sel=document.getElementById('key');
