@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guitar Trainer">
+<meta name="theme-color" content="#00f0ff">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Guitar Solo Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+    --cyan:#00f0ff;
+    --magenta:#ff00aa;
+    --orange:#ff8800;
+    --green:#00ff88;
+    --red:#ff3355;
+    --bg:#030010;
+    --grid:rgba(120,0,255,0.2);
+    --card:rgba(0,0,30,0.75);
+    --border:rgba(0,240,255,0.15);
+    --text:rgba(0,240,255,0.92);
+    --text-dim:rgba(0,240,255,0.65);
+    --text-muted:rgba(0,240,255,0.45);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Exo 2',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh;}
+.note-label,.deg-btn,.int-label,.fp-input,.cq-input,.fp-score,.cdi-fret,.cdi-note,.int-pill,.vc-label,.chi-notes,.chi-intervals{font-family:'JetBrains Mono','SF Mono','Cascadia Mono','Fira Code','Courier New',monospace;}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse 80% 40% at 50% 65%,rgba(255,60,0,0.15) 0%,rgba(160,0,180,0.1) 35%,transparent 65%),radial-gradient(ellipse 100% 30% at 50% 55%,rgba(100,0,255,0.1) 0%,transparent 50%);pointer-events:none;z-index:0;}
+.grid-floor{position:fixed;bottom:-20%;left:50%;transform:translateX(-50%) perspective(300px) rotateX(55deg);width:250%;height:70%;background:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:80px 60px;pointer-events:none;z-index:0;opacity:0.6;}
+.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:100;}
+.app{position:relative;z-index:1;padding:14px 16px;max-width:1400px;margin:0 auto;}
+.header{text-align:center;margin-bottom:14px;}
+.header h1{font-size:22px;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:var(--cyan);text-shadow:0 0 10px var(--cyan),0 0 30px rgba(0,240,255,0.4);}
+.header h1 span{color:var(--magenta);text-shadow:0 0 10px var(--magenta),0 0 30px rgba(255,0,170,0.4);}
+.tab-bar{display:flex;gap:5px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px;}
+.tab-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;background:transparent;border:1px solid rgba(0,240,255,0.2);color:var(--text-muted);border-radius:4px;padding:8px 18px;cursor:pointer;transition:all 0.15s;}
+.tab-btn.active{background:rgba(0,240,255,0.08);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,240,255,0.2);}
+.tab-btn:hover:not(.active){border-color:rgba(0,240,255,0.5);color:var(--text-dim);}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center;}
+.ctrl-label{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);}
+select,button{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:600;background:rgba(0,0,25,0.9);border:1px solid rgba(0,240,255,0.25);color:var(--text);border-radius:4px;padding:7px 12px;cursor:pointer;letter-spacing:0.5px;transition:border-color 0.15s,box-shadow 0.15s;}
+select:hover,button:hover{border-color:rgba(0,240,255,0.7);box-shadow:0 0 10px rgba(0,240,255,0.2);}
+select option{background:#030010;color:var(--text);}
+optgroup{background:#030010;color:var(--text-muted);font-style:normal;}
+.toggle-wrap{display:flex;align-items:center;gap:6px;background:rgba(0,0,25,0.9);border:1px solid rgba(0,240,255,0.2);border-radius:4px;padding:6px 11px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:0.5px;color:var(--text);font-family:'Exo 2',sans-serif;transition:border-color 0.15s;}
+.toggle-wrap:hover{border-color:rgba(0,240,255,0.55);}
+.toggle-wrap input[type="checkbox"]{accent-color:var(--magenta);width:13px;height:13px;}
+.quiz-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+.fp-quiz-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;border-radius:4px;padding:7px 14px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;border:1px solid;transition:all 0.15s;}
+.fp-quiz-btn.easy{background:rgba(0,255,136,0.07);border-color:rgba(0,255,136,0.45);color:var(--green);}
+.fp-quiz-btn.easy:hover{box-shadow:0 0 14px rgba(0,255,136,0.35);}
+.fp-quiz-btn.hard{background:rgba(255,51,85,0.07);border-color:rgba(255,51,85,0.45);color:var(--red);}
+.fp-quiz-btn.hard:hover{box-shadow:0 0 14px rgba(255,51,85,0.35);}
+.fp-quiz-btn.stop{background:rgba(255,136,0,0.07);border-color:rgba(255,136,0,0.4);color:var(--orange);}
+.fp-quiz-btn.stop:hover{box-shadow:0 0 12px rgba(255,136,0,0.3);}
+#freeplay-panel{display:none;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px;margin-bottom:12px;}
+.fp-question{font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;line-height:1.4;}
+.fp-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.opt-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:600;background:rgba(0,0,30,0.9);border:1px solid rgba(0,240,255,0.3);color:var(--text);border-radius:4px;padding:8px 14px;cursor:pointer;transition:all 0.15s;letter-spacing:0.3px;}
+.opt-btn:hover:not(:disabled){border-color:var(--cyan);box-shadow:0 0 10px rgba(0,240,255,0.2);}
+.opt-btn.opt-correct{background:rgba(0,255,136,0.15);border-color:var(--green);color:var(--green);}
+.opt-btn.opt-wrong{background:rgba(255,51,85,0.15);border-color:var(--red);color:var(--red);}
+.opt-btn:disabled{cursor:default;}
+.fp-input-wrap{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.fp-input,.cq-input{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(0,0,30,0.9);border:1px solid rgba(0,240,255,0.3);color:var(--text);border-radius:4px;padding:8px 12px;flex:1;outline:none;}
+.fp-input:focus,.cq-input:focus{border-color:var(--cyan);box-shadow:0 0 8px rgba(0,240,255,0.2);}
+.fp-feedback,.fb-correct,.fb-wrong{font-size:13px;font-weight:600;margin-bottom:8px;min-height:20px;letter-spacing:0.5px;}
+.fb-correct{color:var(--green);}
+.fb-wrong{color:var(--red);}
+.fp-fretboard-hint{font-size:12px;color:var(--orange);margin-bottom:10px;font-style:italic;}
+.fp-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.fp-score{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text-dim);}
+.quiz-nav-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;background:rgba(0,240,255,0.07);border:1px solid rgba(0,240,255,0.35);color:var(--cyan);border-radius:4px;padding:7px 16px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s;}
+.quiz-nav-btn:hover{box-shadow:0 0 10px rgba(0,240,255,0.25);}
+.degree-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;align-items:center;}
+.deg-btn{font-family:'JetBrains Mono',monospace;font-size:12px;background:rgba(0,0,25,0.9);border:1px solid rgba(0,240,255,0.28);color:var(--text);border-radius:4px;padding:5px 10px;cursor:pointer;letter-spacing:0.5px;transition:all 0.15s;}
+.deg-btn.off{opacity:0.25;border-color:rgba(0,240,255,0.08);}
+.deg-btn:hover{border-color:rgba(0,240,255,0.65);}
+#chord-selectors{align-items:center;gap:8px;}
+.box-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:600;background:rgba(0,0,25,0.9);border:1px solid rgba(255,136,0,0.3);color:rgba(255,136,0,0.75);border-radius:4px;padding:5px 12px;cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;transition:all 0.15s;}
+.box-btn.active{background:rgba(255,136,0,0.1);border-color:var(--orange);color:var(--orange);box-shadow:0 0 10px rgba(255,136,0,0.25);}
+.box-btn:hover:not(.active){border-color:rgba(255,136,0,0.6);color:var(--orange);}
+.fretboard-scroll{width:100%;overflow-x:auto;overflow-y:hidden;padding-bottom:8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(0,240,255,0.2) transparent;}
+.fretboard-scroll::-webkit-scrollbar{height:3px;}
+.fretboard-scroll::-webkit-scrollbar-thumb{background:rgba(0,240,255,0.2);border-radius:2px;}
+#fretboard{display:flex;align-items:flex-start;min-width:max-content;padding:6px 0;background:rgba(0,0,12,0.75);border:1px solid rgba(0,240,255,0.06);border-radius:6px;}
+.fret-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;position:relative;}
+.fret-col::after{content:"";position:absolute;top:24px;right:0;width:2px;height:calc(100% - 24px);background:linear-gradient(to bottom,rgba(180,180,220,0.6),rgba(140,140,180,0.2));box-shadow:0 0 3px rgba(200,200,255,0.25);}
+.fret-col.open{width:18px !important;background:linear-gradient(to right,#c8c8e8,#9898bc);border-radius:3px;margin-right:4px;box-shadow:0 0 12px rgba(200,200,255,0.7);}
+.fret-col.open::after{display:none;}
+.marker{height:24px;width:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1px;}
+.double-dot{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:6px;pointer-events:none;}
+.double-dot span,.single-dot{width:7px;height:7px;border-radius:50%;background:rgba(0,240,255,0.3);box-shadow:0 0 6px rgba(0,240,255,0.45);}
+.single-dot{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);}
+.string-wrap{width:100%;position:relative;}
+.string-wrap::before{content:"";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);border-radius:999px;opacity:0.72;pointer-events:none;}
+.string-0::before{height:3px;background:linear-gradient(to right,#a0a8c0,#dde4f0,#a0a8c0);}
+.string-1::before{height:2.6px;background:linear-gradient(to right,#aab0c8,#e0e8f4,#aab0c8);}
+.string-2::before{height:2.2px;background:linear-gradient(to right,#b8bcd4,#e8eef8,#b8bcd4);}
+.string-3::before{height:1.8px;background:linear-gradient(to right,#c4c8e0,#eef2fc,#c4c8e0);}
+.string-4::before{height:1.4px;background:linear-gradient(to right,#d0d4ec,#f4f8ff,#d0d4ec);}
+.string-5::before{height:1px;background:linear-gradient(to right,#dce0f4,#ffffff,#dce0f4);}
+.note{width:100%;height:50px;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;cursor:pointer;transition:transform 0.12s;}
+.note:hover{transform:scale(1.1);}
+.note.hidden{opacity:0.04;}
+.note.dimmed .note-label{opacity:0.16;}
+.note-label{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;background:rgba(0,5,25,0.8);border:1px solid rgba(0,240,255,0.15);color:var(--text-dim);backdrop-filter:blur(2px);}
+.note.active .note-label{border-color:rgba(0,240,255,0.4);color:var(--text);}
+.note.root .note-label{background:var(--magenta);border-color:rgba(255,255,255,0.5);color:white;box-shadow:0 0 16px rgba(255,0,170,0.85),0 0 32px rgba(255,0,170,0.35);}
+.note.target .note-label,.note.chord .note-label{border-color:var(--green);color:var(--green);box-shadow:0 0 14px rgba(0,255,136,0.6),inset 0 0 6px rgba(0,255,136,0.1);}
+.note.color .note-label{border-color:var(--orange);color:var(--orange);box-shadow:0 0 10px rgba(255,136,0,0.45);}
+.note.tension .note-label{border-color:var(--red);color:var(--red);box-shadow:0 0 10px rgba(255,51,85,0.45);}
+.note.box .note-label{outline:1px solid rgba(255,170,0,0.6);outline-offset:2px;}
+.note.quiz-correct .note-label{background:var(--green) !important;color:#000 !important;border-color:white !important;box-shadow:0 0 20px var(--green) !important;}
+.note.quiz-wrong .note-label{background:var(--red) !important;color:white !important;border-color:white !important;box-shadow:0 0 20px var(--red) !important;}
+.note.blue-note .note-label{
+    outline:2px solid rgba(40,140,255,0.85);
+    outline-offset:3px;
+}
+.fret-col.open .note-label{
+    color:#000820;
+    font-weight:700;
+    font-size:11px;
+    background:rgba(220,230,255,0.9);
+    border:2px solid rgba(180,200,255,0.9);
+    box-shadow:0 0 10px rgba(180,200,255,0.6);
+}
+.fret-col.open .note.active .note-label{
+    background:rgba(0,240,255,0.25);
+    border:2px solid var(--cyan);
+    color:#000820;
+    box-shadow:0 0 12px rgba(0,240,255,0.55);
+}
+.fret-col.open .note.root .note-label{
+    background:var(--magenta);
+    border:2px solid rgba(255,255,255,0.7);
+    color:white;
+    box-shadow:0 0 16px rgba(255,0,170,0.9);
+}
+.cq-result-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.scale-context{margin-top:12px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:6px;}
+.sc-top{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap;}
+.sc-name{font-size:14px;font-weight:800;letter-spacing:1px;color:var(--cyan);text-shadow:0 0 8px rgba(0,240,255,0.35);}
+.sc-feel{font-size:12px;color:var(--text-dim);}
+.sc-over{font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:rgba(255,136,0,0.85);margin-bottom:4px;}
+.sc-tip{font-size:13px;color:var(--text-dim);margin-bottom:10px;line-height:1.55;}
+.sc-intervals{display:flex;flex-wrap:wrap;gap:5px;}
+.int-pill{font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.2);color:var(--text);border-radius:3px;padding:3px 8px;}
+.course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px;}
+.chapter-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;}
+.chapter-card:hover{border-color:rgba(0,240,255,0.45);box-shadow:0 0 16px rgba(0,240,255,0.1);}
+.cc-icon{font-size:24px;margin-bottom:8px;}
+.cc-title{font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:4px;letter-spacing:0.5px;}
+.cc-sub{font-size:12px;color:var(--text-muted);}
+#chapter-view{display:none;}
+.back-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:600;background:transparent;border:1px solid rgba(0,240,255,0.25);color:var(--text-dim);border-radius:4px;padding:7px 14px;cursor:pointer;letter-spacing:1px;margin-bottom:16px;transition:all 0.15s;}
+.back-btn:hover{border-color:var(--cyan);color:var(--text);}
+.ch-header{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.ch-icon{font-size:32px;}
+.ch-title{font-size:18px;font-weight:800;color:var(--cyan);letter-spacing:1px;}
+.ch-sub{font-size:13px;color:var(--text-muted);margin-top:3px;}
+.ch-section{margin-bottom:18px;}
+.ch-heading{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--orange);margin-bottom:8px;}
+.ch-body{font-size:14px;color:var(--text-dim);line-height:1.7;}
+.ch-quiz-bar{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 14px;padding-top:14px;border-top:1px solid var(--border);}
+.ch-quiz-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;}
+#cq-container{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px;}
+.cq-top{display:flex;justify-content:space-between;margin-bottom:10px;}
+.cq-progress{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;}
+.cq-question{font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px;line-height:1.45;}
+.cq-options{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.cq-input-wrap{display:flex;gap:8px;margin-bottom:10px;align-items:center;}
+.cq-hint{font-size:12px;color:var(--text-muted);margin-bottom:8px;font-style:italic;}
+.cq-result{text-align:center;padding:20px 0;}
+.cqr-score{font-size:36px;font-weight:800;color:var(--cyan);text-shadow:0 0 14px rgba(0,240,255,0.5);}
+.cqr-pct{font-size:20px;color:var(--text-dim);margin-bottom:8px;}
+.cqr-label{font-size:14px;color:var(--text-muted);margin-bottom:16px;}
+.cq-retry-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;background:rgba(0,240,255,0.07);border:1px solid rgba(0,240,255,0.35);color:var(--cyan);border-radius:4px;padding:8px 20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;}
+.learn-section{margin-bottom:18px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:6px;}
+.learn-heading{font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.learn-p{font-size:13px;color:var(--text-dim);line-height:1.7;margin-bottom:10px;}
+.learn-p strong{color:var(--text);}
+.learn-p em{color:rgba(255,136,0,0.9);font-style:normal;}
+.color-key{display:flex;flex-direction:column;gap:10px;}
+.ck-row{display:flex;align-items:center;gap:10px;}
+.ck-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;}
+.ck-label{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text);min-width:100px;flex-shrink:0;}
+.ck-desc{font-size:13px;color:var(--text-dim);}
+.int-row{display:grid;grid-template-columns:36px 120px 1fr;gap:8px;align-items:start;padding:7px 0;border-bottom:1px solid rgba(0,240,255,0.05);}
+.int-label{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--cyan);}
+.int-name{font-size:11px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-dim);padding-top:1px;}
+.int-desc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+.chord-map{display:flex;flex-direction:column;gap:5px;margin-top:10px;}
+.cm-row{display:flex;gap:12px;align-items:baseline;padding:8px 12px;background:rgba(0,240,255,0.02);border:1px solid rgba(0,240,255,0.06);border-radius:4px;flex-wrap:wrap;}
+.cm-chord{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:rgba(255,136,0,0.85);min-width:160px;flex-shrink:0;}
+.cm-scales{font-size:13px;color:var(--text-dim);}
+#mode-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:12px;}
+.mode-card{background:rgba(0,0,20,0.7);border:1px solid rgba(0,240,255,0.08);border-radius:5px;padding:12px;transition:border-color 0.15s;}
+.mode-card:hover{border-color:rgba(0,240,255,0.25);}
+.mc-name{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);margin-bottom:4px;}
+.mc-feel{font-size:12px;color:rgba(255,136,0,0.85);margin-bottom:3px;}
+.mc-over{font-size:12px;color:var(--text-muted);margin-bottom:5px;}
+.mc-tip{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:8px;}
+.mc-intervals{display:flex;flex-wrap:wrap;gap:3px;}
+.ch-selector{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:6px;}
+.ch-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+#ch-text-input{font-family:'JetBrains Mono',monospace;font-size:13px;background:rgba(0,0,25,0.9);border:1px solid rgba(0,240,255,0.3);color:var(--text);border-radius:4px;padding:7px 12px;flex:1;min-width:120px;outline:none;letter-spacing:0.5px;}
+#ch-text-input:focus{border-color:var(--cyan);box-shadow:0 0 8px rgba(0,240,255,0.2);}
+#ch-text-input::placeholder{color:var(--text-muted);}
+.ch-find-btn{font-family:'Exo 2',sans-serif;font-size:12px;font-weight:700;background:rgba(0,240,255,0.07);border:1px solid rgba(0,240,255,0.4);color:var(--cyan);border-radius:4px;padding:7px 18px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s;}
+.ch-find-btn:hover{box-shadow:0 0 12px rgba(0,240,255,0.3);}
+.ch-info{padding:14px 16px;margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:6px;}
+.chi-row1{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
+.chi-chord{font-size:22px;font-weight:800;color:var(--cyan);text-shadow:0 0 12px rgba(0,240,255,0.4);letter-spacing:1px;}
+.chi-full{font-size:13px;color:var(--text-dim);}
+.chi-detail{display:flex;gap:18px;flex-wrap:wrap;}
+.chi-notes{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--orange);}
+.chi-intervals{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);}
+.ch-voicings-grid{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.voicing-card{background:rgba(0,0,20,0.7);border:1px solid rgba(0,240,255,0.12);border-radius:6px;padding:10px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:100px;}
+.voicing-card:hover{border-color:rgba(0,240,255,0.4);box-shadow:0 0 14px rgba(0,240,255,0.1);}
+.voicing-card.selected{border-color:var(--cyan);box-shadow:0 0 18px rgba(0,240,255,0.25);}
+.vc-label{font-size:10px;font-weight:600;letter-spacing:0.5px;color:var(--text-dim);text-align:center;}
+.vc-diff{display:flex;gap:2px;}
+.vc-star{font-size:8px;color:rgba(255,136,0,0.5);}
+.vc-star.lit{color:var(--orange);}
+.ch-detail-panel{display:flex;gap:20px;flex-wrap:wrap;padding:18px;background:var(--card);border:1px solid var(--border);border-radius:6px;margin-bottom:16px;}
+.ch-detail-diagram{flex-shrink:0;}
+.ch-detail-info{flex:1;min-width:180px;}
+.cdi-label{font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:10px;letter-spacing:1px;}
+.cdi-strings{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.cdi-string{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.cdi-string-name{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);}
+.cdi-fret{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);font-weight:600;}
+.cdi-note{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);}
+.cdi-mute{color:var(--red);}
+.cdi-fingering{font-size:12px;color:var(--text-dim);line-height:1.6;}
+.cdi-diff-row{display:flex;align-items:center;gap:8px;margin-top:12px;}
+.cdi-diff-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);}
+.ch-no-results{font-size:13px;color:var(--text-muted);padding:20px 0;text-align:center;}
+.uke-mode.string-0::before{height:1.8px;background:linear-gradient(to right,#b8c8d8,#e8f0f8,#b8c8d8);}
+.uke-mode .string-1::before{height:2.2px;background:linear-gradient(to right,#a8b8c8,#dce8f0,#a8b8c8);}
+.uke-mode .string-2::before{height:1.6px;background:linear-gradient(to right,#c0ccd8,#eaf0f8,#c0ccd8);}
+.uke-mode .string-3::before{height:1.2px;background:linear-gradient(to right,#d0dce8,#f4f8ff,#d0dce8);}
+.inst-toggle{display:flex;gap:0;}
+.inst-btn{font-family:'Exo 2',system-ui,sans-serif;font-size:12px;font-weight:700;background:rgba(0,0,25,0.9);border:1px solid rgba(0,240,255,0.25);color:var(--text-muted);padding:7px 14px;cursor:pointer;letter-spacing:0.5px;transition:all 0.15s;}
+.inst-btn:first-child{border-radius:4px 0 0 4px;}
+.inst-btn:last-child{border-radius:0 4px 4px 0;border-left:none;}
+.inst-btn.active{background:rgba(0,240,255,0.1);border-color:var(--cyan);color:var(--cyan);}
+.inst-btn:hover:not(.active){border-color:rgba(0,240,255,0.5);color:var(--text-dim);}
+@media(max-width:800px){
+    .header h1{font-size:16px;letter-spacing:2px;}
+    .controls{gap:6px;}
+    select,button,.toggle-wrap{font-size:11px;padding:6px 9px;}
+    .note{height:44px;}
+    .note-label{width:28px;height:28px;font-size:10px;}
+    .marker{height:20px;font-size:10px;}
+    .tab-btn{font-size:11px;padding:7px 12px;}
+    .int-row{grid-template-columns:32px 1fr;grid-template-rows:auto auto;}
+    .int-name{grid-column:2;}
+    .int-desc{grid-column:1/-1;}
+    #mode-cards{grid-template-columns:1fr;}
+    .course-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+}
+</style>
+</head>
+<body>
+<div class="grid-floor"></div>
+<div class="scanlines"></div>
+<div class="app">
+<div class="header"><h1>Guitar <span>Solo</span> Trainer</h1></div>
+<div class="tab-bar">
+    <button class="tab-btn active" id="tab-play">▶ Play</button>
+    <button class="tab-btn" id="tab-course">🎓 Course</button>
+    <button class="tab-btn" id="tab-learn">◈ Reference</button>
+    <button class="tab-btn" id="tab-chords">🎸 Chords</button>
+</div>
+<div id="view-play">
+<div class="controls">
+    <div class="inst-toggle">
+        <button class="inst-btn active" id="inst-guitar" data-inst="guitar">🎸 Guitar</button>
+        <button class="inst-btn" id="inst-ukulele" data-inst="ukulele">🎵 Ukulele</button>
+    </div>
+    <input type="hidden" id="instrument" value="guitar">
+    <span class="ctrl-label">Key</span>
+    <select id="key"></select>
+    <span class="ctrl-label">Scale</span>
+    <select id="scale">
+        <optgroup label="Modes">
+            <option value="major">Major (Ionian)</option>
+            <option value="dorian">Dorian</option>
+            <option value="phrygian">Phrygian</option>
+            <option value="lydian">Lydian</option>
+            <option value="mixolydian">Mixolydian</option>
+            <option value="minor">Natural Minor</option>
+            <option value="locrian">Locrian</option>
+        </optgroup>
+        <optgroup label="Pentatonics">
+            <option value="minorPent" selected>Minor Pentatonic</option>
+            <option value="majorPent">Major Pentatonic</option>
+            <option value="bluesMinor">Blues Minor</option>
+            <option value="bluesMajor">Blues Major</option>
+        </optgroup>
+        <optgroup label="Minor Variants">
+            <option value="harmonicMinor">Harmonic Minor</option>
+            <option value="melodicMinor">Melodic Minor</option>
+        </optgroup>
+        <optgroup label="Symmetrical">
+            <option value="dimHW">Diminished (H-W)</option>
+            <option value="dimWH">Diminished (W-H)</option>
+            <option value="wholeTone">Whole Tone</option>
+        </optgroup>
+        <optgroup label="Exotic">
+            <option value="phrygDom">Phrygian Dominant</option>
+            <option value="dblHarmonicMaj">Double Harmonic</option>
+        </optgroup>
+    </select>
+    <label class="toggle-wrap"><input type="checkbox" id="intervalMode"> Intervals</label>
+    <label class="toggle-wrap"><input type="checkbox" id="showBoxes" checked> Boxes</label>
+    <label class="toggle-wrap"><input type="checkbox" id="targetMode" checked> Targets</label>
+    <label class="toggle-wrap"><input type="checkbox" id="flipStrings" checked> Standard Orientation</label>
+</div>
+<div class="controls">
+    <label class="toggle-wrap"><input type="checkbox" id="chordContext"> Chord Context</label>
+    <span id="chord-selectors" style="display:none;align-items:center;gap:8px;">
+        <span class="ctrl-label">Over</span>
+        <select id="chordRoot"></select>
+        <select id="chordQuality">
+            <option value="maj">Major</option>
+            <option value="min">Minor</option>
+            <option value="dom7">Dom 7</option>
+            <option value="maj7">Major 7</option>
+            <option value="min7">Minor 7</option>
+            <option value="dim">Diminished</option>
+            <option value="dim7">Dim 7</option>
+            <option value="aug">Augmented</option>
+        </select>
+    </span>
+</div>
+<div class="quiz-bar">
+    <span class="ctrl-label">Quick Quiz</span>
+    <button class="fp-quiz-btn easy" id="fp-easy-btn">Easy</button>
+    <button class="fp-quiz-btn hard" id="fp-hard-btn">Hard</button>
+    <button class="fp-quiz-btn stop" id="fp-stop-btn">Stop</button>
+</div>
+<div id="freeplay-panel">
+    <div id="fp-question" class="fp-question"></div>
+    <div id="fp-options" class="fp-options"></div>
+    <div id="fp-input-wrap" class="fp-input-wrap" style="display:none">
+        <input id="fp-input" class="fp-input" type="text" placeholder="Type your answer…">
+        <button class="quiz-nav-btn" id="fp-submit-btn">Check</button>
+    </div>
+    <div id="fp-fretboard-hint" class="fp-fretboard-hint" style="display:none">👆 Click the correct note on the fretboard above</div>
+    <div id="fp-feedback" class="fp-feedback"></div>
+    <div class="fp-row">
+        <span id="fp-score" class="fp-score"></span>
+        <button class="quiz-nav-btn" id="fp-next-btn">Next →</button>
+    </div>
+</div>
+<div class="degree-bar" id="degree-bar"></div>
+<div id="box-controls" class="controls" style="display:none;">
+    <span class="ctrl-label">Box</span>
+    <button class="box-btn active" data-box="all">All</button>
+    <button class="box-btn" data-box="0">1</button>
+    <button class="box-btn" data-box="1">2</button>
+    <button class="box-btn" data-box="2">3</button>
+    <button class="box-btn" data-box="3">4</button>
+    <button class="box-btn" data-box="4">5</button>
+</div>
+<div class="fretboard-scroll"><div id="fretboard"></div></div>
+<div id="scale-context" class="scale-context">
+    <div class="sc-top"><span id="sc-name" class="sc-name"></span><span id="sc-feel" class="sc-feel"></span></div>
+    <div id="sc-over" class="sc-over"></div>
+    <div id="sc-tip" class="sc-tip"></div>
+    <div id="sc-intervals" class="sc-intervals"></div>
+</div>
+</div>
+<div id="view-course" style="display:none;">
+<div id="course-grid" class="course-grid"></div>
+<div id="chapter-view">
+    <button class="back-btn" id="back-to-course">← All Chapters</button>
+    <div id="chapter-content"></div>
+    <div class="ch-quiz-bar">
+        <span class="ch-quiz-label">Quiz this chapter:</span>
+        <button class="fp-quiz-btn easy" id="ch-quiz-easy" data-chapter="">Easy</button>
+        <button class="fp-quiz-btn hard" id="ch-quiz-hard" data-chapter="">Hard</button>
+    </div>
+    <div id="cq-container" style="display:none;"></div>
+</div>
+</div>
+<div id="view-learn" style="display:none;">
+<div class="learn-section">
+<div class="learn-heading">Harmonic Functions</div>
+<p class="learn-p">Every chord in a key has a <strong>function</strong> — a dramatic role in the story of tension and resolution.</p>
+<div class="chord-map">
+<div class="cm-row"><div class="cm-chord">Tonic (I)</div><div class="cm-scales">Home base. Sounds complete and resolved. Everything in music is moving toward or away from this point.</div></div>
+<div class="cm-row"><div class="cm-chord">Subdominant (IV)</div><div class="cm-scales">Moves away from home — restless but not urgent. Creates contrast without the strong pull of the dominant.</div></div>
+<div class="cm-row"><div class="cm-chord">Dominant (V)</div><div class="cm-scales">Maximum tension. Built on the 5th degree. A dominant 7 chord contains a tritone that pulls powerfully back to tonic.</div></div>
+</div>
+<p class="learn-p" style="margin-top:12px"><strong>The I-IV-V</strong> is the foundation of blues, rock, and country. In A: A (I) · D (IV) · E (V). Your minor pentatonic in A works over all three.</p>
+<p class="learn-p"><strong>The ii-V-I</strong> is the jazz engine. In C: Dm7 → G7 → Cmaj7. The ii prepares the dominant, the dominant resolves to tonic. Understanding this progression lets you target chord tones through the changes.</p>
+<p class="learn-p"><strong>Perfect intervals:</strong> A <em>Perfect 5th</em> (7 semitones) is always stable — the power chord interval, never clashes. A <em>Perfect 4th</em> (5 semitones) is open and strong, but can clash over a major I chord because it sits a semitone above the major 3rd. Use the 4th to pass through rather than land on over a major tonic chord.</p>
+</div>
+<div class="learn-section">
+<div class="learn-heading">Reading the Fretboard</div>
+<div class="color-key">
+<div class="ck-row"><span class="ck-dot" style="background:var(--magenta);box-shadow:0 0 8px var(--magenta)"></span><span class="ck-label">Root</span><span class="ck-desc">Home base — the note that names the key. Always sounds resolved.</span></div>
+<div class="ck-row"><span class="ck-dot" style="background:var(--green);box-shadow:0 0 8px var(--green)"></span><span class="ck-label">Chord tone</span><span class="ck-desc">Notes that define the chord — your safest landing spots when soloing.</span></div>
+<div class="ck-row"><span class="ck-dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></span><span class="ck-label">Color tone</span><span class="ck-desc">Stable scale notes that add flavour without clashing over the chord.</span></div>
+<div class="ck-row"><span class="ck-dot" style="background:var(--red);box-shadow:0 0 8px var(--red)"></span><span class="ck-label">Tension</span><span class="ck-desc">Notes a semitone from a chord tone — they create energy and want to resolve.</span></div>
+<div class="ck-row"><span class="ck-dot" style="background:var(--cyan);box-shadow:0 0 8px var(--cyan)"></span><span class="ck-label">Scale note</span><span class="ck-desc">In the scale but no special role in the current chord context.</span></div>
+<div class="ck-row"><span class="ck-dot" style="background:transparent;border:1px solid rgba(255,170,0,0.7);outline:1px solid rgba(255,170,0,0.4);outline-offset:2px"></span><span class="ck-label">Box position</span><span class="ck-desc">Falls within the current pentatonic box position.</span></div>
+</div>
+</div>
+<div class="learn-section">
+<div class="learn-heading">Interval Reference</div>
+<p class="learn-p">An interval is the distance between two notes counted in semitones. One fret = one semitone. The labels R, b3, 5, b7 tell you exactly how far each note sits from the root of the key.</p>
+<div id="interval-ref"></div>
+</div>
+<div class="learn-section">
+<div class="learn-heading">Chord → Scale Quick Reference</div>
+<div class="chord-map">
+<div class="cm-row"><div class="cm-chord">Over major chords</div><div class="cm-scales">Major · Lydian · Mixolydian · Major Pentatonic</div></div>
+<div class="cm-row"><div class="cm-chord">Over minor chords</div><div class="cm-scales">Natural Minor · Dorian · Phrygian · Minor Pentatonic</div></div>
+<div class="cm-row"><div class="cm-chord">Over dominant 7</div><div class="cm-scales">Mixolydian · Blues Minor · Phrygian Dominant</div></div>
+<div class="cm-row"><div class="cm-chord">Blues (any key)</div><div class="cm-scales">Blues Minor Pentatonic · Blues Major Pentatonic</div></div>
+<div class="cm-row"><div class="cm-chord">When in doubt</div><div class="cm-scales">Minor Pentatonic — almost always works</div></div>
+</div>
+</div>
+<div class="learn-section">
+<div class="learn-heading">All Scales & Modes</div>
+<div id="mode-cards"></div>
+</div>
+</div>
+</div>
+<div id="view-chords" style="display:none;">
+<div class="ch-selector">
+    <div class="ch-row">
+        <span class="ctrl-label">Root</span>
+        <select id="ch-root"></select>
+        <span class="ctrl-label">Quality</span>
+        <select id="ch-quality">
+            <optgroup label="Triads">
+                <option value="">Major</option>
+                <option value="m">Minor</option>
+                <option value="dim">Diminished</option>
+                <option value="aug">Augmented</option>
+                <option value="sus2">Sus 2</option>
+                <option value="sus4">Sus 4</option>
+                <option value="5">Power (5th)</option>
+            </optgroup>
+            <optgroup label="6th">
+                <option value="6">Major 6th</option>
+                <option value="m6">Minor 6th</option>
+                <option value="6/9">6/9</option>
+            </optgroup>
+            <optgroup label="7th">
+                <option value="maj7">Major 7th</option>
+                <option value="7">Dominant 7th</option>
+                <option value="m7">Minor 7th</option>
+                <option value="dim7">Diminished 7th</option>
+                <option value="m7b5">Half Diminished (ø)</option>
+                <option value="mMaj7">Minor Major 7th</option>
+                <option value="maj7#5">Major 7th #5</option>
+                <option value="7sus4">Dom 7 Sus4</option>
+                <option value="7sus2">Dom 7 Sus2</option>
+            </optgroup>
+            <optgroup label="Altered Dominant">
+                <option value="7b5">7b5</option>
+                <option value="7#5">7#5 (Aug 7)</option>
+                <option value="7b9">7b9</option>
+                <option value="7#9">7#9 (Hendrix)</option>
+                <option value="7#11">7#11 (Lydian Dom)</option>
+                <option value="7b13">7b13</option>
+                <option value="7alt">Altered (7alt)</option>
+                <option value="7b9#11">7b9#11</option>
+                <option value="7#9#11">7#9#11</option>
+            </optgroup>
+            <optgroup label="9th">
+                <option value="maj9">Major 9th</option>
+                <option value="9">Dominant 9th</option>
+                <option value="m9">Minor 9th</option>
+                <option value="add9">Add 9</option>
+                <option value="madd9">Minor Add 9</option>
+                <option value="mMaj9">Minor Major 9th</option>
+                <option value="9#11">9#11</option>
+                <option value="9b13">9b13</option>
+            </optgroup>
+            <optgroup label="11th">
+                <option value="maj11">Major 11th</option>
+                <option value="11">Dominant 11th</option>
+                <option value="m11">Minor 11th</option>
+            </optgroup>
+            <optgroup label="13th">
+                <option value="maj13">Major 13th</option>
+                <option value="13">Dominant 13th</option>
+                <option value="m13">Minor 13th</option>
+                <option value="13b9">13b9</option>
+                <option value="13#9">13#9</option>
+                <option value="13#11">13#11</option>
+            </optgroup>
+        </select>
+        <button class="ch-find-btn" id="ch-find-btn">Find Voicings</button>
+    </div>
+    <div class="ch-row">
+        <span class="ctrl-label">Or type:</span>
+        <input type="text" id="ch-text-input" placeholder="e.g. Am7, Cmaj9, F#7b9, Bbm11…">
+        <button class="ch-find-btn" id="ch-text-btn">→</button>
+    </div>
+</div>
+<div id="ch-info" class="ch-info" style="display:none;">
+    <div class="chi-row1">
+        <span id="chi-chord" class="chi-chord"></span>
+        <span id="chi-full" class="chi-full"></span>
+    </div>
+    <div class="chi-detail">
+        <span id="chi-notes" class="chi-notes"></span>
+        <span id="chi-intervals" class="chi-intervals"></span>
+    </div>
+</div>
+<div id="ch-voicings-grid" class="ch-voicings-grid"></div>
+<div id="ch-detail-panel" class="ch-detail-panel" style="display:none;">
+    <div id="ch-detail-diagram" class="ch-detail-diagram"></div>
+    <div id="ch-detail-info" class="ch-detail-info"></div>
+</div>
+</div>
+
+<script>
+if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('./sw.js')
+            .then(r=>console.log('SW registered, scope:',r.scope))
+            .catch(e=>console.log('SW failed:',e));
+    });
+}
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

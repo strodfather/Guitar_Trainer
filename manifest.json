@@ -1,0 +1,24 @@
+{
+  "name": "Guitar & Uke Trainer",
+  "short_name": "GuitarTrainer",
+  "description": "Interactive guitar and ukulele scale, chord and theory trainer",
+  "start_url": "./guitar_trainer.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#030010",
+  "theme_color": "#00f0ff",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
