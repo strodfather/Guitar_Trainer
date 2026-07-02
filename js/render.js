@@ -34,7 +34,10 @@ export function createFretboard(){
             dot.classList.add("single-dot");
             col.appendChild(dot);
         }
-        const strIndices=flipStrings?[5,4,3,2,1,0]:[0,1,2,3,4,5];
+        const n=tuning.length;
+        const strIndices=flipStrings
+            ?Array.from({length:n},(_,i)=>n-1-i)
+            :[...Array(n).keys()];
         strIndices.forEach(si=>{
             const openNote=tuning[si];
             const wrap=document.createElement("div");
