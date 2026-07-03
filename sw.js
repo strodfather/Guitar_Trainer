@@ -1,6 +1,12 @@
 const CACHE='guitar-trainer-v3';
 
-const PRECACHE=[
+const STATIC=[
+    './icon-192.png',
+    './icon-512.png',
+    './manifest.json'
+];
+
+const NETWORK_FIRST=[
     './guitar_trainer.html',
     './js/theory.js',
     './js/state.js',
@@ -9,15 +15,13 @@ const PRECACHE=[
     './js/main.js',
     './js/course.js',
     './js/chords.js',
-    './js/chordDiagram.js',
-    './manifest.json',
-    './icon-192.png',
-    './icon-512.png'
+    './js/chorddiagram.js',
+    './sw.js'
 ];
 
 self.addEventListener('install',e=>{
     e.waitUntil(
-        caches.open(CACHE).then(cache=>cache.addAll(PRECACHE))
+        caches.open(CACHE).then(c=>c.addAll([...STATIC,...NETWORK_FIRST]))
     );
     self.skipWaiting();
 });
@@ -34,33 +38,27 @@ self.addEventListener('activate',e=>{
 self.addEventListener('fetch',e=>{
     if(e.request.method!=='GET') return;
     if(!e.request.url.startsWith('http')) return;
+
     const url=new URL(e.request.url);
     const isFont=url.hostname.includes('fonts.googleapis.com')||url.hostname.includes('fonts.gstatic.com');
-    if(isFont){
+    const isStatic=STATIC.some(p=>e.request.url.endsWith(p.replace('./','/')));
+
+    if(isFont||isStatic){
         e.respondWith(
-            caches.match(e.request).then(cached=>{
-                const network=fetch(e.request).then(res=>{
-                    if(res.ok){
-                        const clone=res.clone();
-                        caches.open(CACHE).then(c=>c.put(e.request,clone));
-                    }
+            caches.match(e.request).then(cached=>
+                cached||fetch(e.request).then(res=>{
+                    if(res.ok){const c=res.clone();caches.open(CACHE).then(ch=>ch.put(e.request,c));}
                     return res;
-                });
-                return cached||network;
-            })
+                })
+            )
         );
         return;
     }
+
     e.respondWith(
-        caches.match(e.request).then(cached=>{
-            if(cached) return cached;
-            return fetch(e.request).then(res=>{
-                if(res.ok){
-                    const clone=res.clone();
-                    caches.open(CACHE).then(c=>c.put(e.request,clone));
-                }
-                return res;
-            }).catch(()=>caches.match('./guitar_trainer.html'));
-        })
+        fetch(e.request).then(res=>{
+            if(res.ok){const c=res.clone();caches.open(CACHE).then(ch=>ch.put(e.request,c));}
+            return res;
+        }).catch(()=>caches.match(e.request).then(cached=>cached||caches.match('./guitar_trainer.html')))
     );
 });
