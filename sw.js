@@ -1,4 +1,4 @@
-const CACHE='guitar-trainer-v2';
+const CACHE='guitar-trainer-v3';
 
 const PRECACHE=[
     './guitar_trainer.html',
