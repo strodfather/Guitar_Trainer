@@ -143,10 +143,8 @@ function buildReferenceTab(){
 function bindEvents(){
     document.querySelectorAll('.inst-btn').forEach(btn=>{
         btn.addEventListener('click',()=>{
-            const inst=btn.dataset.inst;
-            document.getElementById('instrument').value=inst;
-            document.querySelectorAll('.inst-btn').forEach(b=>b.classList.toggle('active',b===btn));
-            switchInstrument(inst);
+            _syncInstButtons(btn.dataset.inst);
+            switchInstrument(btn.dataset.inst);
         });
     });
     document.getElementById('key').addEventListener('change',e=>{setState({key:e.target.value,chordRoot:e.target.value});document.getElementById('chordRoot').value=e.target.value;renderNotes();updateScaleContext();});
@@ -189,6 +187,12 @@ function bindEvents(){
     });
 }
 
+function _syncInstButtons(inst){
+    document.querySelectorAll('.inst-btn').forEach(b=>b.classList.toggle('active',b.dataset.inst===inst));
+    const h=document.getElementById('instrument');
+    if(h) h.value=inst;
+}
+
 function switchInstrument(inst){
     const cfg=INSTRUMENTS[inst];
     setState({instrument:inst,tuning:cfg.tuning,fretCount:cfg.fretCount,flipStrings:cfg.flip,selectedBoxes:new Set()});
@@ -199,10 +203,12 @@ function switchInstrument(inst){
     updateScaleContext();
     createFretboard();
     renderNotes();
-    const flipChk=document.getElementById('flipStrings');
-    if(flipChk) flipChk.checked=cfg.flip;
+    _syncInstButtons(inst);
     const title=document.querySelector('.header h1 span');
     if(title) title.textContent=inst==='ukulele'?'Uke':'Solo';
+    document.getElementById('ch-voicings-grid').innerHTML='';
+    document.getElementById('ch-info').style.display='none';
+    document.getElementById('ch-detail-panel').style.display='none';
 }
 
 function _populateChordSelects(){
@@ -278,7 +284,8 @@ function _showVoicingDetail(v){
     const diagDiv=document.getElementById('ch-detail-diagram');
     const infoDiv=document.getElementById('ch-detail-info');
     renderDiagram(v,diagDiv,true);
-    const stringNames=['Low E','A','D','G','B','High E'];
+    const{tuning}=getState();
+    const stringNames=tuning;
     const stringsHTML=v.frets.map((f,si)=>{
         const muted=f===-1;
         const open=f===0;
