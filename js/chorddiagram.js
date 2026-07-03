@@ -1,8 +1,10 @@
-const SX=[10,24,38,52,66,80];
-const FY=[22,36,50,64,78,92];
-const DOT_Y=FY.map((_,i)=>(FY[i]+(FY[i+1]||FY[i]+14))/2);
-const MARKER_Y=13;
 const W=90,H=108;
+
+function _sx(numStrings){
+    const span=70,startX=10;
+    const gap=numStrings>1?span/(numStrings-1):0;
+    return Array.from({length:numStrings},(_,i)=>startX+i*gap);
+}
 
 function _svgEl(tag,attrs,text){
     const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -18,6 +20,11 @@ function _fretRow(fret,baseFret){
 
 export function renderDiagram(voicing,container,large=false){
     const{frets,fingers,barre,baseFret}=voicing;
+    const numStrings=frets.length;
+    const SX=_sx(numStrings);
+    const FY=[22,36,50,64,78,92];
+    const DOT_Y=FY.map((_,i)=>(FY[i]+(FY[i+1]||FY[i]+14))/2);
+    const MARKER_Y=13;
     const scale=large?1.6:1;
     const vw=W*scale, vh=H*scale;
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -39,8 +46,10 @@ export function renderDiagram(voicing,container,large=false){
 
     const showNut=baseFret===1&&!frets.some(f=>f>5);
 
+    const lastX=SX[SX.length-1];
+
     if(showNut){
-        svg.appendChild(_svgEl('line',{x1:SX[0],y1:FY[0],x2:SX[5],y2:FY[0],stroke:colors.nut,'stroke-width':'3.5','stroke-linecap':'round'}));
+        svg.appendChild(_svgEl('line',{x1:SX[0],y1:FY[0],x2:lastX,y2:FY[0],stroke:colors.nut,'stroke-width':'3.5','stroke-linecap':'round'}));
     }else{
         svg.appendChild(_svgEl('text',{x:W-1,y:FY[0]+5,'text-anchor':'end','font-size':'8',fill:colors.fretLabel}),`${baseFret}fr`);
         const t=_svgEl('text',{x:W-1,y:FY[0]+5,'text-anchor':'end','font-size':'8',fill:colors.fretLabel});
@@ -49,7 +58,7 @@ export function renderDiagram(voicing,container,large=false){
     }
 
     for(let i=1;i<FY.length;i++){
-        svg.appendChild(_svgEl('line',{x1:SX[0],y1:FY[i],x2:SX[5],y2:FY[i],stroke:colors.line,'stroke-width':'1'}));
+        svg.appendChild(_svgEl('line',{x1:SX[0],y1:FY[i],x2:lastX,y2:FY[i],stroke:colors.line,'stroke-width':'1'}));
     }
 
     for(let si=0;si<6;si++){
